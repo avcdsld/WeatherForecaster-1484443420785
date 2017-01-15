@@ -4,6 +4,7 @@ GEM
     haml (4.0.7)
       tilt
     json (1.8.3)
+    line-bot-api (1.0.0)
     rack (1.6.4)
     rack-protection (1.5.3)
       rack
@@ -20,12 +21,17 @@ GEM
 
 PLATFORMS
   ruby
+  x64-mingw32
 
 DEPENDENCIES
   haml (~> 4.0)
   json (~> 1.8.3)
+  line-bot-api
   rails_12factor
   sinatra (~> 1.4)
 
+RUBY VERSION
+   ruby 2.2.3p173
+
 BUNDLED WITH
-   1.11.2
+   1.13.7
