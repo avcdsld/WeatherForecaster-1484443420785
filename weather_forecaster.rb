@@ -5,7 +5,13 @@ require 'line/bot'
 require './db_connector'
 require './weather_connector'
 
+# please set env 'BASIC_AUTH_USERNAME', 'BASIC_AUTH_PASSWORD'
+
 $db = DbConnector.new
+
+use Rack::Auth::Basic do |username, password|
+  username == ENV['BASIC_AUTH_USERNAME'] && password == ENV['BASIC_AUTH_PASSWORD']
+end
 
 # control part of MVC
 # an HTTP method paired with a URL-matching pattern
@@ -75,12 +81,11 @@ post '/callback' do
     case event
     when Line::Bot::Event::Message
       user_id = event['source']['userId']
-      #reply_text = event.message['text'] # default
       reply_text = "使い方：\n\n・位置情報を送信してください。\n（トークルーム下部の「＋」をタップして、「位置情報」から送信できます。）\n\n"
       reply_text << "・「スタート」と入力すると、毎日朝７時に天気をお知らせします。\n\n"
       reply_text << "・「ストップ」と入力すると、お知らせを停止します。\n\n"
       reply_text << "・「天気」と入力すると、現在設定されている地域の天気をお知らせします。\n\n"
-      
+
       case event.type
       when Line::Bot::Event::MessageType::Text
         case event.message['text']
@@ -106,21 +111,15 @@ post '/callback' do
             reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]') # TODO: 定数化
           end
         end
-      
+
       when Line::Bot::Event::MessageType::Location
         latitude = event.message['latitude']
         longitude = event.message['longitude']
         pref, area = $db.set_location(user_id, latitude, longitude)
         reply_text = %{地域を #{pref} #{area} にセットしました！\n「天気」と入力すると、今日の天気がわかります。}
-      
-      #when Line::Bot::Event::MessageType::Image, Line::Bot::Event::MessageType::Video
-        #reply_text = '申し訳ありません。画像やビデオには対応していません。'
-        ## response = client.get_message_content(event.message['id'])
-        ## tf = Tempfile.open("content")
-        ## tf.write(response.body)
-      
+
       end
-      
+
       message = { type: 'text', text: reply_text }
       client.reply_message(event['replyToken'], message)
     end
