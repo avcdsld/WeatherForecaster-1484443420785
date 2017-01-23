@@ -5,12 +5,21 @@ require 'line/bot'
 require './db_connector'
 require './weather_connector'
 
-# please set env 'BASIC_AUTH_USERNAME', 'BASIC_AUTH_PASSWORD'
+# please set env 'MYSQL_HOST', 'MYSQL_USERNAME', 'MYSQL_PASSWORD', 'MYSQL_DATABASE'
 
 $db = DbConnector.new
 
-use Rack::Auth::Basic do |username, password|
-  username == ENV['BASIC_AUTH_USERNAME'] && password == ENV['BASIC_AUTH_PASSWORD']
+helpers do
+  def protected!
+    return if authorized?
+    headers['WWW-Authenticate'] = 'Basic realm="Restricted Area"'
+    halt 401, "Not authorized\n"
+  end
+
+  def authorized?
+    @auth ||=  Rack::Auth::Basic::Request.new(request.env)
+    @auth.provided? and @auth.basic? and @auth.credentials and @auth.credentials == [ENV['BASIC_AUTH_USERNAME'], ENV['BASIC_AUTH_PASSWORD']]
+  end
 end
 
 # control part of MVC
@@ -54,6 +63,7 @@ def client
 end
 
 get '/send' do
+  protected! # basic auth
   weather_conn = WeatherConnector.new
   $db.get_all_notification_info.each do |row|
     if row['is_enabled'] == 1 then
