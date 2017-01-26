@@ -66,16 +66,27 @@ get '/send' do
   protected! # basic auth
   weather_conn = WeatherConnector.new
   now_time = Time.now
+  begin
   $db.get_all_notification_info.each do |row|
     if row['is_enabled'] == 1 then
-      next if row['hour'] != now_time.hour
-      next if row['minute'] != (now_time.min / 5) * 5
+      hour = row['hour'] || 7
+      minute = row['minute'] || 0
+      puts '** hour ** '
+      puts hour
+      puts '** min ** '
+      puts minute
+      puts '********* '
+      next if hour != (now_time.hour + 9) % 24 # GTM to JTS
+      next if minute != now_time.min
       forecast = weather_conn.get_weather(row['pref'], row['area'], row['url'], row['xpath'])
       puts forecast
       message = { type: 'text', text: forecast }
       p 'push message'
       p client.push_message(row['user_id'], message)
     end
+  end
+  rescue => e
+    p e
   end
   "OK"
 end
@@ -98,14 +109,13 @@ post '/callback' do
       reply_text << "・「スタート」と入力すると、毎日朝７時に天気をお知らせします。\n\n"
       reply_text << "・「ストップ」と入力すると、お知らせを停止します。\n\n"
       reply_text << "・「天気」と入力すると、現在設定されている地域の天気をお知らせします。\n\n"
-      reply_text << "・時刻を７時から変更したいときは、数字4桁で時刻を入力してください。5分刻みで設定できます。例：朝６時 → 0600"
+      reply_text << "・時刻を７時から変更したいときは、数字4桁で時刻を入力してください。例：朝６時 → 0600"
 
       case event.type
       when Line::Bot::Event::MessageType::Text
         case event.message['text']
         when  /([0-2][0-9])([0-6][0-9])/
           hour, minute = $1.to_i, $2.to_i
-          minute = (minute / 5) * 5 # 5未満は切り捨て
           $db.set_time(user_id, hour, minute)
           reply_text = %{時刻を #{hour} 時 #{minute} 分にセットしました！}
         when 'スタート'
