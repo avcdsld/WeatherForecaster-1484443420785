@@ -68,8 +68,8 @@ get '/send' do
   now_time = Time.now
   $db.get_all_notification_info.each do |row|
     if row['is_enabled'] == 1 then
-      next if num != now_time.hour
-      next if num != (now_time.min / 5) * 5
+      next if row['hour'] != now_time.hour
+      next if row['minute'] != (now_time.min / 5) * 5
       forecast = weather_conn.get_weather(row['pref'], row['area'], row['url'], row['xpath'])
       puts forecast
       message = { type: 'text', text: forecast }
