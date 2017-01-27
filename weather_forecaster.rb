@@ -73,7 +73,7 @@ get '/send' do
       minute = row['minute'] || 0
       next if hour != (now_time.hour + 9) % 24 # GTM to JTS
       next if minute != now_time.min
-      day_offset = hour < 6 ? 0 : 1 # weather api is updated at 6:00 am
+      day_offset = hour < 6 ? 1 : 0 # weather api is updated at 6:00 am
       forecast = weather_conn.get_weather(row['pref'], row['area'], row['url'], row['xpath'], day_offset)
       puts %{#{hour}:#{minute} - #{forecast}}
       message = { type: 'text', text: forecast }
