@@ -70,7 +70,7 @@ class DbConnector
   	p 'enable_user'
   	execute_sql(%{
   	  insert into notification_info (user_id, hour, minute, area_id, is_enabled) 
-  	    values ('#{user_id}', #{DEFAULT_HOUR}, #{DEFAULT_MINUTE}, '#{DEFAULT_AREA_ID}', true) 
+  	    values ('#{user_id}', #{DEFAULT_HOUR}, #{DEFAULT_MINUTE}, #{DEFAULT_AREA_ID}, true) 
   	    on duplicate key update user_id = values(user_id), is_enabled = values(is_enabled) })
   end
 
@@ -78,15 +78,15 @@ class DbConnector
   	p 'disable_user'
   	execute_sql(%{
   	  insert into notification_info (user_id, hour, minute, area_id, is_enabled) 
-  	    values ('#{user_id}', #{DEFAULT_HOUR}, #{DEFAULT_MINUTE}, '#{DEFAULT_AREA_ID}', false) 
+  	    values ('#{user_id}', #{DEFAULT_HOUR}, #{DEFAULT_MINUTE}, #{DEFAULT_AREA_ID}, false) 
   	    on duplicate key update user_id = values(user_id), is_enabled = values(is_enabled) })
   end
 
   def set_time(user_id, hour, minute)
   	p 'set_time'
   	execute_sql(%{
-  	  insert into notification_info (user_id, hour, minute) 
-        values ('#{user_id}', #{hour}, #{minute}) 
+  	  insert into notification_info (user_id, hour, minute, area_id) 
+        values ('#{user_id}', #{hour}, #{minute}, #{DEFAULT_AREA_ID}) 
         on duplicate key update user_id = values(user_id), hour = values(hour), minute = values(minute) })
   end
 
@@ -97,8 +97,8 @@ class DbConnector
   	    order by abs(latitude - #{latitude}) + abs(longitude - #{longitude}) asc }).first
     puts %{#{result['id']}, #{result['pref']}, #{result['area']}, #{result['latitude']}, #{result['longitude']}}
   	execute_sql(%{
-  	  insert into notification_info (user_id, area_id) 
-        values ('#{user_id}', #{result['id']}) 
+  	  insert into notification_info (user_id, hour, minute, area_id) 
+        values ('#{user_id}', #{DEFAULT_HOUR}, #{DEFAULT_MINUTE}, #{result['id']}) 
         on duplicate key update user_id = values(user_id), area_id = values(area_id) })
     return result['pref'], result['area']
   end
@@ -127,5 +127,10 @@ class DbConnector
       p row
     end
     return results
+  end
+
+  def fix_notification_info
+    p 'fix_notification_info'
+    execute_sql(%{ update notification_info set hour = 7, minute = 0 where hour is null })
   end
 end

@@ -71,15 +71,10 @@ get '/send' do
     if row['is_enabled'] == 1 then
       hour = row['hour'] || 7
       minute = row['minute'] || 0
-      puts '** hour ** '
-      puts hour
-      puts '** min ** '
-      puts minute
-      puts '********* '
       next if hour != (now_time.hour + 9) % 24 # GTM to JTS
       next if minute != now_time.min
       forecast = weather_conn.get_weather(row['pref'], row['area'], row['url'], row['xpath'])
-      puts forecast
+      puts %{#{hour}:#{minute} - #{forecast}}
       message = { type: 'text', text: forecast }
       p 'push message'
       p client.push_message(row['user_id'], message)
@@ -130,10 +125,37 @@ post '/callback' do
           weather_conn = WeatherConnector.new
           begin
             info = $db.get_notification_info(user_id)
-            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'])
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 0)
           rescue => e
             p e
-            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]') # TODO: 定数化
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 0) # TODO: 定数化
+          end
+        when /.*(明日|あした).*/
+          weather_conn = WeatherConnector.new
+          begin
+            info = $db.get_notification_info(user_id)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 1)
+          rescue => e
+            p e
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 1) # TODO: 定数化
+          end
+        when /.*(明後日|あさって).*/
+          weather_conn = WeatherConnector.new
+          begin
+            info = $db.get_notification_info(user_id)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 2)
+          rescue => e
+            p e
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 2) # TODO: 定数化
+          end
+        when /.*(明々後日|しあさって).*/
+          weather_conn = WeatherConnector.new
+          begin
+            info = $db.get_notification_info(user_id)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 3)
+          rescue => e
+            p e
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 3) # TODO: 定数化
           end
         end
 
@@ -141,7 +163,7 @@ post '/callback' do
         latitude = event.message['latitude']
         longitude = event.message['longitude']
         pref, area = $db.set_location(user_id, latitude, longitude)
-        reply_text = %{地域を #{pref} #{area} にセットしました！\n「天気」と入力すると、今日の天気がわかります。}
+        reply_text = %{地域を #{pref} #{area} にセットしました！\n「スタート」と入力すると、毎日天気をお知らせします。\n「天気」と入力すると、今日の天気がわかります。}
 
       end
 
