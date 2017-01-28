@@ -117,20 +117,11 @@ post '/callback' do
         when 'スタート'
           $db.enable(user_id)
           info = $db.get_notification_info(user_id)
-          reply_text = %{毎日朝 #{info['hour']} 時 #{info['minute']} 分に #{info['pref']} #{info['area']} の天気をお知らせします！}
+          reply_text = %{毎日 #{info['hour']} 時 #{info['minute']} 分に #{info['pref']} #{info['area']} の天気をお知らせします！}
           reply_text << "\nお知らせを停止するときは「ストップ」と入力してください。\n地域を設定するときは 位置情報 を送信してください。"
         when 'ストップ'
           $db.disable(user_id)
           reply_text = "お知らせを停止します！\n再開するときは「スタート」と入力してください。\n地域を設定するときは 位置情報 を送信してください。"
-        when /.*天気.*/
-          weather_conn = WeatherConnector.new
-          begin
-            info = $db.get_notification_info(user_id)
-            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 0)
-          rescue => e
-            p e
-            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 0) # TODO: 定数化
-          end
         when /.*(明日|あした).*/
           weather_conn = WeatherConnector.new
           begin
@@ -157,6 +148,15 @@ post '/callback' do
           rescue => e
             p e
             reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 3) # TODO: 定数化
+          end
+        when /.*天気.*/
+          weather_conn = WeatherConnector.new
+          begin
+            info = $db.get_notification_info(user_id)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 0)
+          rescue => e
+            p e
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 0) # TODO: 定数化
           end
         end
 
