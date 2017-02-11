@@ -4,7 +4,7 @@ require 'rexml/document'
 
 # Usage: 
 #   weather = WeatherConnector.new
-#   puts weather.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]')
+#   puts weather.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', 0)
 
 class WeatherConnector
   def get_weather(pref, area, url, xpath, day_offset)
