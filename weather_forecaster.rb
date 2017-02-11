@@ -62,31 +62,6 @@ def client
   }
 end
 
-get '/testsend' do
-  protected! # basic auth
-  weather_conn = WeatherConnector.new
-  now_time = Time.now
-  begin
-    day_offset = 0
-    forecast = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset)
-    message = { type: 'text', text: forecast }
-    p 'push message'
-
-    case forecast
-    when /.*(くもり|雪).*/
-      message_sticker = { type: 'sticker', packageId: '4', stickerId: '266' } # 雨（傘）のスタンプ
-      messages = [message, message_sticker]
-      p client.push_message(row['user_id'], messages)
-    else
-      p client.push_message(row['user_id'], message)
-    end
-
-  rescue => e
-    p e
-  end
-  "OK"
-end
-
 get '/send' do
   protected! # basic auth
   weather_conn = WeatherConnector.new
@@ -103,7 +78,16 @@ get '/send' do
       puts %{#{hour}:#{minute} - #{forecast}}
       message = { type: 'text', text: forecast }
       p 'push message'
-      p client.push_message(row['user_id'], message)
+
+      case forecast
+      when /.*(雨|雪).*/
+        message_sticker = { type: 'sticker', packageId: '4', stickerId: '266' } # 雨（傘）のスタンプ
+        messages = [message, message_sticker]
+        p client.push_message(row['user_id'], messages)
+      else
+        p client.push_message(row['user_id'], message)
+      end
+
     end
   end
   rescue => e
