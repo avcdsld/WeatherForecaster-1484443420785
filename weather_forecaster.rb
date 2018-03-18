@@ -74,7 +74,7 @@ get '/send' do
       next if hour != (now_time.hour + 9) % 24 # GTM to JTS
       next if minute != now_time.min
       day_offset = hour < 6 ? 1 : 0 # weather api is updated at 6:00 am
-      forecast = weather_conn.get_weather(row['pref'], row['area'], row['url'], row['xpath'], day_offset)
+      forecast = weather_conn.get_weather(row['pref'], row['area'], row['url'].sub(/http/, 'https'), row['xpath'], day_offset)
       puts %{#{hour}:#{minute} - #{forecast}}
       message = { type: 'text', text: forecast }
       p 'push message'
@@ -135,37 +135,37 @@ post '/callback' do
           weather_conn = WeatherConnector.new
           begin
             info = $db.get_notification_info(user_id)
-            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 1)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'].sub(/http/, 'https'), info['xpath'], day_offset = 1)
           rescue => e
             p e
-            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 1) # TODO: 定数化
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'https://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 1) # TODO: 定数化
           end
         when /.*(明後日|あさって).*/
           weather_conn = WeatherConnector.new
           begin
             info = $db.get_notification_info(user_id)
-            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 2)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'].sub(/http/, 'https'), info['xpath'], day_offset = 2)
           rescue => e
             p e
-            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 2) # TODO: 定数化
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'https://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 2) # TODO: 定数化
           end
         when /.*(明々後日|しあさって).*/
           weather_conn = WeatherConnector.new
           begin
             info = $db.get_notification_info(user_id)
-            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 3)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'].sub(/http/, 'https'), info['xpath'], day_offset = 3)
           rescue => e
             p e
-            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 3) # TODO: 定数化
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'https://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 3) # TODO: 定数化
           end
         when /.*天気.*/
           weather_conn = WeatherConnector.new
           begin
             info = $db.get_notification_info(user_id)
-            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'], info['xpath'], day_offset = 0)
+            reply_text = weather_conn.get_weather(info['pref'], info['area'], info['url'].sub(/http/, 'https'), info['xpath'], day_offset = 0)
           rescue => e
             p e
-            reply_text = weather_conn.get_weather('神奈川県', '東部', 'http://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 0) # TODO: 定数化
+            reply_text = weather_conn.get_weather('神奈川県', '東部', 'https://www.drk7.jp/weather/xml/14.xml', 'weatherforecast/pref/area[1]', day_offset = 0) # TODO: 定数化
           end
         end
 
